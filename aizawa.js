@@ -9,14 +9,14 @@ import { AfterimagePass } from 'https://cdn.jsdelivr.net/npm/three@0.118/example
 
 let camera, scene, renderer, circles, composer, renderScene, bloomPass;
 let afterImagePass;
-let NUM_SPHERES = 5000;
+let NUM_SPHERES = 100;
 
 function init(){
     scene = new THREE.Scene();
 // const camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 10, 1000);
     // this camera code is from stack overflow https://stackoverflow.com/questions/23450588/isometric-camera-with-three-js
     const aspect = window.innerWidth / window.innerHeight;
-    const d = 30;
+    const d = 12;
     camera = new THREE.OrthographicCamera( - d * aspect, d * aspect, d, - d, 1, 2000 );
 
     renderer = new THREE.WebGLRenderer();
@@ -48,16 +48,19 @@ function init(){
         let cube;
         i < NUM_SPHERES/2.5 ? cube = new THREE.Mesh(points[i], light_mat): cube = new THREE.Mesh(points[i], dark_mat)
         scene.add(cube);
-        // cube.position.set(Math.random(), Math.random(), Math.random());
-        if(i < NUM_SPHERES/2){
-            cube.position.set(-Math.random(), -Math.random(), -Math.random());
-        }else{
-            cube.position.set(Math.random(), Math.random(), Math.random());
+
+        // generate random numbers to better randomize the spawn positions
+        let rands = []
+        while(rands.length < 3){
+            let r = (Math.floor(Math.random() * 100) + 1) - 50
+            rands.push(r);
         }
+        console.log(rands);
+        cube.position.set(rands[0] * Math.random(), rands[1] * Math.random(), rands[2] * Math.random());
         circles.push(cube);
     }
 
-    camera.position.set( 0,0,-50 );
+    camera.position.set( -47,-49,-34);
     camera.lookAt(scene.position)
 
     // By default, the circles wont look at the camera, so they wont be seen
@@ -69,8 +72,10 @@ function init(){
 
 // Variables to control the attractor
 let alpha = 1.4; // don't change; this is part of the math
-let speed = 0.01; // dictates how fast particles move. value too high = offscreen
+let speed = 0.005; // dictates how fast particles move. value too high = offscreen
 let deltatime;
+
+let a = 0.95, b = 0.7, c = 0.6, d = 3.5, e = 0.25, f = 0.1;
 function animate_lorenz() {
     // spawn in spheres until 60fps hit
     // see if i can spawn in spheres without rendering
@@ -83,13 +88,14 @@ function animate_lorenz() {
         let x = circles[i].position.x;
         let y = circles[i].position.y;
         let z = circles[i].position.z;
-        circles[i].position.x += speed*(10.0 * (y-x));
-        circles[i].position.y += speed*(circles[i].position.x * (30.0 - circles[i].position.z) - circles[i].position.y);
-        circles[i].position.z += speed*(circles[i].position.x * circles[i].position.y - (8/3) * circles[i].position.z);
+        circles[i].position.x += speed*((z - b)*x - d * y);
+        circles[i].position.y += speed*(d * x + (z - b)*y);
+        circles[i].position.z += speed*(c + a*z - ((z*z*z)/3) - (x*x + y*y)*(1 + e*z) + f*z*x*x*x);
     }
     deltatime = Date.now() - time;
     console.log(deltatime)
 }
+
 init();
 animate_lorenz();
 
